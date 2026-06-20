@@ -152,7 +152,7 @@ export interface IdentifierNode {
 
 export interface BinaryNode {
   type: 'Binary';
-  operator: '+' | '-' | '*' | '/' | '==' | '!=' | '<' | '>' | '<=' | '>=';
+  operator: '+' | '-' | '*' | '/' | '%' | '==' | '!=' | '<' | '>' | '<=' | '>=';
   left: ExpressionNode;
   right: ExpressionNode;
   line: number;

@@ -102,6 +102,7 @@ export default function App() {
   const [stepMode, setStepMode] = useState(false);
   const [consoleLogs, setConsoleLogs] = useState<{ text: string; type: 'stdout' | 'error' | 'success' | 'info' }[]>([]);
   const [verification, setVerification] = useState<{ passed: boolean; errorMsg?: string } | null>(null);
+  const [showHint, setShowHint] = useState(false);
 
   // References
   const visualizerBodyRef = useRef<HTMLDivElement>(null);
@@ -139,6 +140,7 @@ export default function App() {
     }
     resetVM();
     setVerification(null);
+    setShowHint(false);
   }, [activeChapterId, activeExerciseIndex]);
 
   // Save completed chapters to localstorage
@@ -588,10 +590,13 @@ export default function App() {
         return;
       }
 
-      // Static code blocks: check C blocks
-      if (trimmed.startsWith('```c')) {
+      // Static code blocks: check blocks
+      if (trimmed.startsWith('```')) {
         closeListIfNeeded(jsxElements, insideList);
         insideList = false;
+        
+        const lang = trimmed.substring(3).trim();
+        const headerText = lang === 'text' ? 'תרשים זיכרון' : 'שפת C';
         
         // Accumulate full block code
         let codeStr = '';
@@ -604,7 +609,7 @@ export default function App() {
         jsxElements.push(
           <div className="code-block-container" key={index}>
             <div className="code-block-header">
-              <span>C Language</span>
+              <span>{headerText}</span>
               <button onClick={() => {
                 navigator.clipboard.writeText(codeStr);
                 alert('הקוד הועתק ללוח!');
@@ -814,7 +819,25 @@ export default function App() {
 
             <div className="exercise-prompt">
               <p style={{ fontWeight: '600', color: 'var(--text-bold, white)', marginBottom: '8px' }}>המשימה שלך:</p>
-              <p style={{ margin: 0, fontSize: '15px' }}>{activeChapter.exercises[activeExerciseIndex]?.prompt}</p>
+              <p style={{ margin: 0, fontSize: '15px', whiteSpace: 'pre-line' }}>{activeChapter.exercises[activeExerciseIndex]?.prompt}</p>
+              {activeChapter.exercises[activeExerciseIndex]?.hint && (
+                <div style={{ marginTop: '14px' }}>
+                  <button
+                    className="btn-hint"
+                    onClick={() => setShowHint(prev => !prev)}
+                  >
+                    {showHint ? '💡 הסתר רמז' : '💡 הצג רמז'}
+                  </button>
+                  {showHint && (
+                    <div className="hint-box">
+                      <strong style={{ display: 'block', marginBottom: '4px', color: 'var(--accent-primary)' }}>רמז:</strong>
+                      <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                        {activeChapter.exercises[activeExerciseIndex].hint}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="playground-grid">

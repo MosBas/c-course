@@ -392,6 +392,7 @@ export class Interpreter {
         case '-': return left - right;
         case '*': return left * right;
         case '/': return right === 0 ? (() => { throw new Error('שגיאת ריצה: חלוקה באפס!'); })() : (expr.operator === '/' ? Math.floor(left / right) : left / right);
+        case '%': return right === 0 ? (() => { throw new Error('שגיאת ריצה: חלוקה באפס!'); })() : (left % right);
         case '==': return left === right ? 1 : 0;
         case '!=': return left !== right ? 1 : 0;
         case '<': return left < right ? 1 : 0;

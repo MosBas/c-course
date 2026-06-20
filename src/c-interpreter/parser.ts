@@ -7,7 +7,7 @@ export interface Token {
 }
 
 const KEYWORDS = new Set(['int', 'char', 'float', 'void', 'if', 'else', 'while', 'for', 'return', 'struct', 'sizeof']);
-const OPERATORS = new Set(['++', '--', '+', '-', '*', '/', '==', '!=', '<=', '>=', '<', '>', '=', '&', '!', '->', '.']);
+const OPERATORS = new Set(['++', '--', '+', '-', '*', '/', '%', '==', '!=', '<=', '>=', '<', '>', '=', '&', '!', '->', '.']);
 const PUNCTUATION = new Set([';', ',', '(', ')', '{', '}', '[', ']']);
 
 export function tokenize(code: string): Token[] {
@@ -675,8 +675,8 @@ export class Parser {
 
   private parseMultiplication(): ExpressionNode {
     let expr = this.parseUnary();
-    while (this.match('OPERATOR', '*') || this.match('OPERATOR', '/')) {
-      const operator = this.previous().value as '*' | '/';
+    while (this.match('OPERATOR', '*') || this.match('OPERATOR', '/') || this.match('OPERATOR', '%')) {
+      const operator = this.previous().value as '*' | '/' | '%';
       const right = this.parseUnary();
       expr = {
         type: 'Binary',
