@@ -37,6 +37,15 @@
   --console-text: #F1F5F9;
   --code-bg: #0F172A;
   --code-text: #F8FAFC;
+
+  /* Syntax Highlighting Colors (Dark Theme) */
+  --hl-keyword: #FF79C6;    /* Pink */
+  --hl-comment: #6272A4;    /* Gray-blue */
+  --hl-string: #F1FA8C;     /* Yellow */
+  --hl-char: #50FA7B;       /* Green */
+  --hl-number: #BD93F9;     /* Purple */
+  --hl-operator: #FFB86C;   /* Orange */
+  --hl-include: #8BE9FD;    /* Cyan */
 }
 
 [data-theme="light"] {
@@ -70,6 +79,15 @@
   --console-text: #3D2F28;
   --code-bg: #FFF5F6;
   --code-text: #3D2F28;
+
+  /* Syntax Highlighting Colors (Light Theme) */
+  --hl-keyword: #DB2777;    /* Deep pink */
+  --hl-comment: #8B7A6C;    /* Brown-gray comment */
+  --hl-string: #0F766E;     /* Deep teal string */
+  --hl-char: #0369A1;       /* Sky blue char */
+  --hl-number: #7C3AED;     /* Violet number */
+  --hl-operator: #B45309;   /* Amber operator */
+  --hl-include: #4338CA;    /* Indigo include */
 }
 
 .theme-toggle-btn {
@@ -508,27 +526,184 @@ code.inline-code {
 
 /* Custom Textarea Editor */
 .code-editor-wrapper {
+  display: flex;
   position: relative;
   flex-grow: 1;
-  background: #0D1117;
-  min-height: 250px;
+  background: var(--editor-bg);
+  min-height: 280px;
   direction: ltr;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.line-numbers-gutter {
+  width: 44px;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 16px 0;
+  text-align: right;
+  padding-right: 12px;
+  user-select: none;
+  overflow: hidden;
+  border-right: 1px solid var(--border-color);
+}
+
+.line-number {
+  height: 21px; /* 14px * 1.5 line-height */
+}
+
+.editor-container {
+  position: relative;
+  flex-grow: 1;
+  height: 280px;
+}
+
+.editor-highlight, .code-editor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-mono) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  padding: 16px !important;
+  margin: 0 !important;
+  border: none !important;
+  outline: none !important;
+  white-space: pre !important;
+  overflow: auto !important;
+  box-sizing: border-box !important;
+  background: transparent !important;
 }
 
 .code-editor {
-  width: 100%;
-  height: 280px;
-  font-family: var(--font-mono);
-  font-size: 14px;
-  background: transparent;
-  color: #C9D1D9;
-  border: none;
+  color: transparent !important;
+  caret-color: var(--text-primary) !important;
   resize: none;
-  padding: 16px;
-  line-height: 1.5;
-  outline: none;
-  direction: ltr;
-  text-align: left;
+  z-index: 2;
+}
+
+.editor-highlight {
+  color: var(--editor-text);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hide scrollbar of gutter and pre, synchronizing scrolling via Javascript */
+.line-numbers-gutter::-webkit-scrollbar,
+.editor-highlight::-webkit-scrollbar {
+  display: none;
+}
+
+/* Syntax Highlighting Styles */
+.hl-comment {
+  color: var(--hl-comment);
+  font-style: italic;
+}
+.hl-keyword {
+  color: var(--hl-keyword);
+  font-weight: bold;
+}
+.hl-string {
+  color: var(--hl-string);
+}
+.hl-char {
+  color: var(--hl-char);
+}
+.hl-number {
+  color: var(--hl-number);
+}
+.hl-operator {
+  color: var(--hl-operator);
+}
+.hl-include {
+  color: var(--hl-include);
+}
+
+/* Pet Toggle Button */
+.pet-toggle-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.pet-toggle-btn:hover {
+  background: var(--border-color);
+  transform: scale(1.1);
+}
+
+.pet-toggle-btn.enabled {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+
+[data-theme="light"] .pet-toggle-btn.enabled {
+  background: rgba(219, 39, 119, 0.15);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 8px rgba(219, 39, 119, 0.3);
+}
+
+/* Animated Pets Overlay and Animations */
+.pets-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+.pet-character {
+  position: absolute;
+  font-size: 26px;
+  line-height: 1;
+  transition: transform 0.1s ease;
+  user-select: none;
+}
+
+.pet-character.walking {
+  animation: pet-walk-cycle 0.6s infinite alternate ease-in-out;
+}
+
+.pet-character.flipped {
+  transform: scaleX(-1);
+}
+
+.pet-character.flipped.walking {
+  animation: pet-walk-cycle-flipped 0.6s infinite alternate ease-in-out;
+}
+
+@keyframes pet-walk-cycle {
+  0% {
+    transform: translateY(0) scaleX(1);
+  }
+  100% {
+    transform: translateY(-5px) scaleX(1);
+  }
+}
+
+@keyframes pet-walk-cycle-flipped {
+  0% {
+    transform: translateY(0) scaleX(-1);
+  }
+  100% {
+    transform: translateY(-5px) scaleX(-1);
+  }
 }
 
 /* Console Terminal */

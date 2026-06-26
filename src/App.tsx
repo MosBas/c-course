@@ -59,11 +59,68 @@ function cloneVMState(state: VMState): VMState {
   };
 }
 
+interface Pet {
+  id: number;
+  emoji: string;
+  x: number;
+  y: number;
+  speed: number;
+  direction: 1 | -1;
+  state: 'walking' | 'idling';
+  stateTimer: number;
+  name: string;
+}
+
+function highlightC(code: string): string {
+  if (!code) return '';
+  let html = code
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  const combinedRegex = new RegExp(
+    '(//[^\\n]*|/\\*[\\s\\S]*?\\*/)' + 
+    '|(#[ \\t]*(?:include|define)\\b[^\\n]*)' + 
+    '|("(?:[^"\\\\]|\\\\.)*")' + 
+    '|(\'(?:[^\'\\\\]|\\\\.)\')' + 
+    '|\\b(0x[0-9a-fA-F]+|\\d+(?:\\.\\d+)?)\\b' + 
+    '|\\b(int|char|float|double|void|struct|union|typedef|if|else|for|while|do|return|switch|case|break|continue|const|unsigned|signed|sizeof|volatile|static|extern)\\b' + 
+    '|(-&gt;|\\+{1,2}|-{1,2}|={1,2}|!=|&lt;=|&gt;=|&lt;|&gt;|(?:&amp;){1,2}|\\|{1,2}|[*/%~^!?:;.])',
+    'g'
+  );
+
+  return html.replace(combinedRegex, (match, comment, include, str, char, num, keyword, op) => {
+    if (comment !== undefined) return `<span class="hl-comment">${comment}</span>`;
+    if (include !== undefined) return `<span class="hl-include">${include}</span>`;
+    if (str !== undefined) return `<span class="hl-string">${str}</span>`;
+    if (char !== undefined) return `<span class="hl-char">${char}</span>`;
+    if (num !== undefined) return `<span class="hl-number">${num}</span>`;
+    if (keyword !== undefined) return `<span class="hl-keyword">${keyword}</span>`;
+    if (op !== undefined) return `<span class="hl-operator">${op}</span>`;
+    return match;
+  });
+}
+
 export default function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('c-course-theme');
     return (saved === 'light' || saved === 'dark') ? saved : 'dark';
   });
+
+  const [petsEnabled, setPetsEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem('c-course-pets-enabled');
+    return saved === 'true';
+  });
+
+  const [pets, setPets] = useState<Pet[]>([]);
+
+  const togglePets = () => {
+    setPetsEnabled(prev => {
+      const next = !prev;
+      localStorage.setItem('c-course-pets-enabled', String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -107,6 +164,8 @@ export default function App() {
   // References
   const visualizerBodyRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
+  const highlightRef = useRef<HTMLPreElement>(null);
   const [arrows, setArrows] = useState<Arrow[]>([]);
   const generatorRef = useRef<any>(null);
 
@@ -169,6 +228,84 @@ export default function App() {
     setArrows([]);
     generatorRef.current = null;
   };
+
+  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    const { scrollTop, scrollLeft } = e.currentTarget;
+    if (highlightRef.current) {
+      highlightRef.current.scrollTop = scrollTop;
+      highlightRef.current.scrollLeft = scrollLeft;
+    }
+    if (gutterRef.current) {
+      gutterRef.current.scrollTop = scrollTop;
+    }
+  };
+
+  useEffect(() => {
+    if (!petsEnabled) {
+      setPets([]);
+      return;
+    }
+
+    const initialPets: Pet[] = [
+      { id: 1, emoji: '🐈', x: 10, y: 0, speed: 12, direction: 1, state: 'walking', stateTimer: 2 + Math.random() * 3, name: 'Bella' },
+      { id: 2, emoji: '🐕', x: 35, y: 0, speed: 15, direction: -1, state: 'idling', stateTimer: 1 + Math.random() * 2, name: 'Max' },
+      { id: 3, emoji: '🐱', x: 60, y: 0, speed: 10, direction: 1, state: 'walking', stateTimer: 3 + Math.random() * 3, name: 'Lily' },
+      { id: 4, emoji: '🐶', x: 85, y: 0, speed: 14, direction: -1, state: 'idling', stateTimer: 2 + Math.random() * 2, name: 'Charlie' }
+    ];
+    setPets(initialPets);
+
+    let lastTime = performance.now();
+    let animationFrameId: number;
+
+    const updateLoop = (now: number) => {
+      const deltaTime = (now - lastTime) / 1000;
+      lastTime = now;
+
+      setPets(prevPets =>
+        prevPets.map(pet => {
+          let { x, speed, direction, state, stateTimer } = pet;
+          stateTimer -= deltaTime;
+
+          if (stateTimer <= 0) {
+            if (state === 'walking') {
+              state = 'idling';
+              stateTimer = 1 + Math.random() * 3;
+            } else {
+              state = 'walking';
+              stateTimer = 3 + Math.random() * 5;
+              if (Math.random() < 0.5) {
+                direction = direction === 1 ? -1 : 1;
+              }
+            }
+          }
+
+          if (state === 'walking') {
+            x += direction * speed * deltaTime;
+            if (x >= 95) {
+              x = 95;
+              direction = -1;
+            } else if (x <= 1) {
+              x = 1;
+              direction = 1;
+            }
+          }
+
+          return {
+            ...pet,
+            x,
+            direction,
+            state,
+            stateTimer
+          };
+        })
+      );
+
+      animationFrameId = requestAnimationFrame(updateLoop);
+    };
+
+    animationFrameId = requestAnimationFrame(updateLoop);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [petsEnabled]);
 
   const handleResetCode = () => {
     if (activeChapter.exercises && activeChapter.exercises[activeExerciseIndex]) {
@@ -524,16 +661,16 @@ export default function App() {
     return () => window.removeEventListener('resize', updateArrows);
   }, [vmState]);
 
-  // Custom key binder for editor Tab and Enter key auto-indents
+  // Custom key binder for editor Tab, Enter key, auto-closing and backspace deletion pairs
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const start = e.currentTarget.selectionStart;
+    const end = e.currentTarget.selectionEnd;
+    const val = e.currentTarget.value;
+
     if (e.key === 'Tab') {
       e.preventDefault();
-      const start = e.currentTarget.selectionStart;
-      const end = e.currentTarget.selectionEnd;
-      const val = e.currentTarget.value;
       const newVal = val.substring(0, start) + '    ' + val.substring(end);
       handleCodeChange(newVal);
-      // Wait for React to apply state updates, then restore cursor
       setTimeout(() => {
         if (editorRef.current) {
           editorRef.current.selectionStart = editorRef.current.selectionEnd = start + 4;
@@ -541,10 +678,6 @@ export default function App() {
       }, 0);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const start = e.currentTarget.selectionStart;
-      const end = e.currentTarget.selectionEnd;
-      const val = e.currentTarget.value;
-
       // Find current line spacing to duplicate
       const lastNewLine = val.lastIndexOf('\n', start - 1);
       const currentLine = val.substring(lastNewLine + 1, start);
@@ -558,6 +691,54 @@ export default function App() {
           editorRef.current.selectionStart = editorRef.current.selectionEnd = start + 1 + spaces.length;
         }
       }, 0);
+    } else {
+      const openChars = ['(', '[', '{', '"', "'"];
+      const closeChars = [')', ']', '}', '"', "'"];
+      const pairMap: Record<string, string> = {
+        '(': ')',
+        '[': ']',
+        '{': '}',
+        '"': '"',
+        "'": "'"
+      };
+
+      const key = e.key;
+
+      if (closeChars.includes(key) && start === end && start < val.length && val.charAt(start) === key) {
+        e.preventDefault();
+        setTimeout(() => {
+          if (editorRef.current) {
+            editorRef.current.selectionStart = editorRef.current.selectionEnd = start + 1;
+          }
+        }, 0);
+      } else if (openChars.includes(key)) {
+        e.preventDefault();
+        const closingChar = pairMap[key];
+        const selectedText = val.substring(start, end);
+        const newVal = val.substring(0, start) + key + selectedText + closingChar + val.substring(end);
+        handleCodeChange(newVal);
+        setTimeout(() => {
+          if (editorRef.current) {
+            editorRef.current.selectionStart = start + 1;
+            editorRef.current.selectionEnd = start + 1 + selectedText.length;
+          }
+        }, 0);
+      } else if (key === 'Backspace') {
+        if (start === end && start > 0 && start < val.length) {
+          const leftChar = val.charAt(start - 1);
+          const rightChar = val.charAt(start);
+          if (pairMap[leftChar] === rightChar) {
+            e.preventDefault();
+            const newVal = val.substring(0, start - 1) + val.substring(start + 1);
+            handleCodeChange(newVal);
+            setTimeout(() => {
+              if (editorRef.current) {
+                editorRef.current.selectionStart = editorRef.current.selectionEnd = start - 1;
+              }
+            }, 0);
+          }
+        }
+      }
     }
   };
 
@@ -762,14 +943,24 @@ export default function App() {
             <div className="logo-icon">C</div>
             <span className="logo-text">C Book בעברית</span>
           </div>
-          <button 
-            className="theme-toggle-btn"
-            onClick={toggleTheme}
-            title="שנה ערכת נושא"
-            aria-label="Toggle Theme"
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              className={`pet-toggle-btn ${petsEnabled ? 'enabled' : ''}`}
+              onClick={togglePets}
+              title="הפעל חיות מחמד מונפשות 🐾"
+              aria-label="Toggle Animated Pets"
+            >
+              🐾
+            </button>
+            <button 
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title="שנה ערכת נושא"
+              aria-label="Toggle Theme"
+            >
+              {theme === 'dark' ? '☀️' : '🌙'}
+            </button>
+          </div>
         </div>
         
         <ul className="chapter-list">
@@ -853,14 +1044,27 @@ export default function App() {
                 </div>
 
                 <div className="code-editor-wrapper">
-                  <textarea
-                    ref={editorRef}
-                    className="code-editor"
-                    value={code}
-                    onChange={(e) => handleCodeChange(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    spellCheck={false}
-                  />
+                  <div className="line-numbers-gutter" ref={gutterRef}>
+                    {code.split('\n').map((_, i) => (
+                      <div key={i} className="line-number">{i + 1}</div>
+                    ))}
+                  </div>
+                  <div className="editor-container">
+                    <pre 
+                      ref={highlightRef} 
+                      className="editor-highlight" 
+                      dangerouslySetInnerHTML={{ __html: highlightC(code) + (code.endsWith('\n') ? ' ' : '') }}
+                    />
+                    <textarea
+                      ref={editorRef}
+                      className="code-editor"
+                      value={code}
+                      onChange={(e) => handleCodeChange(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onScroll={handleScroll}
+                      spellCheck={false}
+                    />
+                  </div>
                 </div>
 
                 {/* Step controls overlays */}
@@ -1055,6 +1259,20 @@ export default function App() {
           )}
         </div>
       </main>
+      {petsEnabled && (
+        <div className="pets-overlay">
+          {pets.map(pet => (
+            <div
+              key={pet.id}
+              className={`pet-character ${pet.state} ${pet.direction === -1 ? 'flipped' : ''}`}
+              style={{ left: `${pet.x}%`, bottom: `${pet.y}px` }}
+              title={pet.name}
+            >
+              {pet.emoji}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
