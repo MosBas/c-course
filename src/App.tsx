@@ -61,7 +61,7 @@ function cloneVMState(state: VMState): VMState {
 
 interface Pet {
   id: number;
-  emoji: string;
+  imageUrl: string;
   x: number;
   y: number;
   speed: number;
@@ -247,10 +247,10 @@ export default function App() {
     }
 
     const initialPets: Pet[] = [
-      { id: 1, emoji: '🐈', x: 10, y: 0, speed: 12, direction: 1, state: 'walking', stateTimer: 2 + Math.random() * 3, name: 'Bella' },
-      { id: 2, emoji: '🐕', x: 35, y: 0, speed: 15, direction: -1, state: 'idling', stateTimer: 1 + Math.random() * 2, name: 'Max' },
-      { id: 3, emoji: '🐱', x: 60, y: 0, speed: 10, direction: 1, state: 'walking', stateTimer: 3 + Math.random() * 3, name: 'Lily' },
-      { id: 4, emoji: '🐶', x: 85, y: 0, speed: 14, direction: -1, state: 'idling', stateTimer: 2 + Math.random() * 2, name: 'Charlie' }
+      { id: 1, imageUrl: 'https://ssl.gstatic.com/colaboratory-static/common/e8283f159efececdafd4f8722fa65905/v2/common/img/chocolatechip.gif', x: 10, y: 0, speed: 12, direction: 1, state: 'walking', stateTimer: 2 + Math.random() * 3, name: 'שוקולד צ\'יפ (קולי)' },
+      { id: 2, imageUrl: 'https://ssl.gstatic.com/colaboratory-static/common/e8283f159efececdafd4f8722fa65905/v2/common/img/oreo.gif', x: 35, y: 0, speed: 15, direction: -1, state: 'idling', stateTimer: 1 + Math.random() * 2, name: 'אוראו (קולי)' },
+      { id: 3, imageUrl: 'https://ssl.gstatic.com/colaboratory-static/common/e8283f159efececdafd4f8722fa65905/v2/common/img/MIDNIGHT.gif', x: 60, y: 0, speed: 10, direction: 1, state: 'walking', stateTimer: 3 + Math.random() * 3, name: 'חתול חצות' },
+      { id: 4, imageUrl: 'https://ssl.gstatic.com/colaboratory-static/common/e8283f159efececdafd4f8722fa65905/v2/common/img/crab.gif', x: 85, y: 0, speed: 14, direction: -1, state: 'idling', stateTimer: 2 + Math.random() * 2, name: 'סרטן קטן' }
     ];
     setPets(initialPets);
 
@@ -1262,14 +1262,14 @@ export default function App() {
       {petsEnabled && (
         <div className="pets-overlay">
           {pets.map(pet => (
-            <div
+            <img
               key={pet.id}
               className={`pet-character ${pet.state} ${pet.direction === -1 ? 'flipped' : ''}`}
               style={{ left: `${pet.x}%`, bottom: `${pet.y}px` }}
+              src={pet.imageUrl}
+              alt={pet.name}
               title={pet.name}
-            >
-              {pet.emoji}
-            </div>
+            />
           ))}
         </div>
       )}

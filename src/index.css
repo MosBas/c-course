@@ -577,6 +577,7 @@ code.inline-code {
   overflow: auto !important;
   box-sizing: border-box !important;
   background: transparent !important;
+  text-align: left !important;
 }
 
 .code-editor {
@@ -670,8 +671,9 @@ code.inline-code {
 
 .pet-character {
   position: absolute;
-  font-size: 26px;
-  line-height: 1;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
   transition: transform 0.1s ease;
   user-select: none;
 }
